@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "backend",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "backend",
+            "env": {
+                "HOST": "127.0.0.1",
+                "PORT": "8000"
+            },
+            "justMyCode": true
+        }
+    ]
+}
