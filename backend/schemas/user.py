@@ -32,10 +32,18 @@ class UserLogin(BaseModel):
     password: str
 
 
+class UserTokenValidation(BaseModel):
+    # email: EmailStr
+    access_token: str
+    # token_type: str
+
+
 # For login response (API output)
 class Token(BaseModel):
     access_token: str
     token_type: str
+    username: str
+    email: EmailStr
 
 
 class TokenData(BaseModel):

@@ -2,8 +2,8 @@ import logging
 import os
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from ..models.base import Base
-from ..models import User
+
+from ..models import Base
 
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -38,10 +38,10 @@ async def create_tables():
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-        logging.info("✅ Database tables created")
+        logging.info("[SUCCESS] Database tables created")
 
     except Exception as e:
-        logging.error(f"❌ Failed to create database tables: {e}")
+        logging.error(f"[FAIL] Failed to create database tables: {e}")
         raise
 
 

@@ -1,18 +1,20 @@
 import os
 from datetime import datetime, timedelta, timezone
+from types import NoneType
 from typing import Optional
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from ..database.database import get_db
-from ..models.user import User
+
+from ..database import get_db
+from ..models import User
 
 # JWT Configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "this-is-definitely-not-the-secret-key-in-prod")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # Security scheme
 security = HTTPBearer()
@@ -40,15 +42,36 @@ def verify_token(token: str) -> Optional[str]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
-        user_id = payload.get("user_id")
+        username: str = payload.get("username")
 
-        if email is None or user_id is None:
+        if email is None or username is None:
             return None
 
-        return email, user_id
+        return email, username
 
     except JWTError:
         return None
+    
+
+async def verify_token_user(
+    token: str, 
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Verify JWT token and check user details in db
+    """
+    token_data = verify_token(token)
+    if not token_data:
+        return None
+
+    email, username = token_data
+
+    result = await db.execute(
+        select(User).where((User.username == username) & (User.email == email))
+    )
+    user = result.scalar_one_or_none()
+    return user
+
 
 
 async def get_current_user(
@@ -64,17 +87,9 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    # Verify token
-    email, user_id = verify_token(credentials.credentials)
+    user = await verify_token_user(credentials.credentials, db)
 
-    if email is None or user_id is None:
-        raise credentials_exception
-    
-    # Get user from database
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
-    
-    if user is None or user.id != user_id:
+    if user is None:
         raise credentials_exception
     
     return user

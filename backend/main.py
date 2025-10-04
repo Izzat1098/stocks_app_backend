@@ -8,10 +8,13 @@ import logging
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv, find_dotenv
-from fastapi import HTTPException
+# from fastapi import HTTPException
 
-from .routes import stocks, users
-from .database.database import create_tables
+from .routes.users import router as users_router
+from .routes.exchanges import router as exchanges_router
+from .routes.stocks import router as stocks_router
+from .routes.reference_data import router as reference_router
+from .database import create_tables
 
 # Configure logging
 logging.basicConfig(
@@ -22,6 +25,14 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+# Suppress noisy loggers
+logging.getLogger("watchfiles").setLevel(logging.WARNING)
+# logging.getLogger("uvicorn.access").setLevel(logging.INFO)
+
+# # Keep important loggers at INFO level
+# logging.getLogger("uvicorn.error").setLevel(logging.INFO)
+logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)  # Suppress SQL queries
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,10 +49,8 @@ def get_cors_origins():
     
     if environment.lower() == "development":
         return [
-            "http://localhost:3000",   # React dev server
-            "http://localhost:5173",   # Vite dev server
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:5173"
+            "http://localhost:3000",
+            "http://127.0.0.1:3000"
         ]
     
     else:  # production
@@ -62,10 +71,13 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type"],
 )
+logging.info(f"CORS origins set to: {origins if origins else 'None'}")
 
-app.include_router(stocks.router)
-app.include_router(users.router)
 
+app.include_router(stocks_router)
+app.include_router(users_router)
+app.include_router(exchanges_router)
+app.include_router(reference_router)
 
 def main():
     load_dotenv(find_dotenv())
@@ -73,19 +85,19 @@ def main():
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", 8000))
     environment = os.getenv("APP_ENV", "")
+    logging.getLogger().setLevel(logging.INFO)
 
     if environment == "development":
-        logging.getLogger().setLevel(logging.DEBUG)
         uvicorn.run(
             "backend.main:app", 
             host=host, 
             port=port, 
             reload=True,
-            log_level="debug"
+            reload_excludes=["app.log", "*.log", "*.pyc", "__pycache__"],
+            log_level="info"
         )
 
     else:
-        logging.getLogger().setLevel(logging.INFO)
         uvicorn.run(
             "backend.main:app", 
             host=host, 
