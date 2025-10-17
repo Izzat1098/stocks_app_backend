@@ -2,13 +2,44 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+import logging
+from datetime import datetime, timedelta, timezone
 
 from ..database import get_db
 from ..models import User, Exchange, Stock, Financial  # SQLAlchemy database model
 from ..schemas import StockCreate, StockResponse, StockUpdate  # Pydantic API schemas
 from ..services.auth import get_current_user
+from ..services.openai import query_company_description
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
+
+
+async def get_stock_by_id(
+    stock_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Stock:
+    """
+    Helper function to get a stock by ID and ensure it belongs to the current user
+    """
+    result = await db.execute(
+        select(Stock)
+        .options(selectinload(Stock.exchange))
+        .where(
+            Stock.id == stock_id,
+            Stock.user_id == current_user.id
+        )
+    )
+    stock = result.scalar_one_or_none()
+
+    if not stock:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Stock not found"
+        )
+    
+    return stock
 
 
 @router.post("/", response_model=StockResponse, status_code=status.HTTP_201_CREATED)
@@ -60,20 +91,7 @@ async def update_stock(
     """
     Update an existing stock
     """
-    # First, check if the stock exists and belongs to the current user
-    result = await db.execute(
-        select(Stock).where(
-            Stock.id == stock_id,
-            Stock.user_id == current_user.id
-        )
-    )
-    stock = result.scalar_one_or_none()
-
-    if not stock:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Stock not found"
-        )
+    stock = await get_stock_by_id(stock_id, db, current_user)
     
     # Update only provided fields
     update_data = stock_data.model_dump(exclude_unset=True)
@@ -95,23 +113,58 @@ async def delete_stock(
     """
     Delete a stock
     """
-    # First, check if the stock exists and belongs to the current user
-    result = await db.execute(
-        select(Stock).where(
-            Stock.id == stock_id,
-            Stock.user_id == current_user.id
-        )
-    )
-    stock = result.scalar_one_or_none()
-
-    if not stock:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Stock not found"
-        )
+    stock = await get_stock_by_id(stock_id, db, current_user)
 
     await db.delete(stock)
     await db.commit()
     
     # 204 No Content - successful deletion with no response body
     return None
+
+
+@router.get("/{stock_id}/ai_description", response_model=StockResponse, status_code=status.HTTP_200_OK)
+async def get_ai_description(
+    stock_id: int,
+    # stock_data: StockUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get AI-generated description for a stock and update it
+    """
+    stock = await get_stock_by_id(stock_id, db, current_user)
+    
+    if stock.ai_description:
+        # check the ai_description_created_at time and if still within 30 days, return existing
+        if stock.ai_description_created_at and (datetime.now(timezone.utc) - stock.ai_description_created_at) < timedelta(days=30):
+            logging.info("Returning existing AI description (within 30 days)")
+            return stock
+    
+    ai_status, ai_response = query_company_description(stock.company_name, stock.exchange.name, stock.country)
+    
+    if not ai_status:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get AI description"
+        )
+    
+    elif "company not found" in ai_response.lower():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found by AI"
+        )
+    
+    else:
+        logging.info(f"AI description for {stock.company_name} received.")
+
+        if len(ai_response) > 500:
+            logging.warning(f"AI description length ({len(ai_response)}) exceeds 500 characters. Response will be truncated.")
+
+        truncated = ai_response[:500] if len(ai_response) > 500 else ai_response
+
+        setattr(stock, 'ai_description', truncated)
+
+        await db.commit()
+        await db.refresh(stock)
+
+        return stock

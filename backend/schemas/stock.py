@@ -103,6 +103,7 @@ class StockCreate(BaseModel):
         return v.title()
     
 class StockUpdate(BaseModel):
+    id: Optional[int] = None
     ticker: Optional[str] = Field(None, max_length=10)
     company_name: Optional[str] = Field(None, max_length=50)
     abbreviation: Optional[str] = Field(None, max_length=10)
@@ -156,37 +157,3 @@ class StockResponse(BaseModel):
     description: Optional[str]
     ai_description: Optional[str]
 
-
-class FinancialCreate(BaseModel):
-    stock_id: int = Field(..., gt=0, description="ID of the stock this financial data belongs to")
-    year: int = Field(..., ge=1900, le=2100, description="Financial year")
-    field: str = Field(..., max_length=50, description="Financial metric name (e.g., revenue)")
-    value: float = Field(..., description="Financial value")
-
-    @field_validator('field')
-    @classmethod
-    def validate_field(cls, v):
-        """Ensure field is always in title case"""
-        return v.title()
-    
-class FinancialUpdate(BaseModel):
-    stock_id: Optional[int] = Field(None, gt=0)
-    year: Optional[int] = Field(None, ge=1900, le=2100)
-    field: Optional[str] = Field(None, max_length=50)
-    value: Optional[float] = None
-
-    @field_validator('field')
-    @classmethod
-    def validate_field(cls, v):
-        """Ensure field is always in title case"""
-        return v.title()
-
-class FinancialResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    
-    id: int
-    stock_id: int
-    year: int
-    field: str
-    value: float
-    created_at: datetime

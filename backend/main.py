@@ -14,6 +14,8 @@ from .routes.users import router as users_router
 from .routes.exchanges import router as exchanges_router
 from .routes.stocks import router as stocks_router
 from .routes.reference_data import router as reference_router
+from .routes.financial import router as financial_router
+from .routes.prompt import router as prompt_router
 from .database import create_tables
 
 # Configure logging
@@ -31,11 +33,12 @@ logging.getLogger("watchfiles").setLevel(logging.WARNING)
 
 # # Keep important loggers at INFO level
 # logging.getLogger("uvicorn.error").setLevel(logging.INFO)
-logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)  # Suppress SQL queries
+# logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)  # Suppress SQL queries
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
     await create_tables()
     yield
 
@@ -78,6 +81,8 @@ app.include_router(stocks_router)
 app.include_router(users_router)
 app.include_router(exchanges_router)
 app.include_router(reference_router)
+app.include_router(financial_router)
+app.include_router(prompt_router)
 
 def main():
     load_dotenv(find_dotenv())
