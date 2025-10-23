@@ -14,7 +14,7 @@ from ..models import User
 # JWT Configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "this-is-definitely-not-the-secret-key-in-prod")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 300
+ACCESS_TOKEN_EXPIRE_MINUTES = 600
 
 # Security scheme
 security = HTTPBearer()

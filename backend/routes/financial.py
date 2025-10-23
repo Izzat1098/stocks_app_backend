@@ -1,3 +1,4 @@
+import time
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +26,7 @@ async def save_financial_data(
     """
     Save financial records
     """
+    start_ts = time.perf_counter()
     stock = await get_stock_by_id(stock_id, db, current_user)
 
     if stock_id != data.stock_id:
@@ -38,7 +40,6 @@ async def save_financial_data(
 
         for field_name, value in metrics.model_dump().items():
             if value is not None:
-
                 db_data = await db.execute(
                     select(Financial)
                     .where(
@@ -65,6 +66,8 @@ async def save_financial_data(
                     db.add(new_record)
 
     await db.commit()
+    elapsed = time.perf_counter() - start_ts
+    logging.info(f"Saved financial data for stock {stock_id} in {elapsed:.4f} seconds")
     return FinancialResponse(**data.model_dump(), updated_at=datetime.now(timezone.utc))
 
 
@@ -77,6 +80,7 @@ async def get_financial_data(
     """
     Get financial records
     """
+    start_ts = time.perf_counter()
     stock = await get_stock_by_id(stock_id, db, current_user)
 
     result = await db.execute(
@@ -104,9 +108,12 @@ async def get_financial_data(
         if date_key not in financial_data["data"]:
             financial_data["data"][date_key] = {}
 
+
         financial_data["data"][date_key][record.field] = record.value
 
     for date_key, metrics_dict in financial_data["data"].items():
         financial_data["data"][date_key] = FinancialMetrics(**metrics_dict)
 
+    elapsed = time.perf_counter() - start_ts
+    logging.info(f"Fetched financial data for stock {stock_id} in {elapsed:.4f} seconds")
     return FinancialResponse(**financial_data, updated_at=datetime.now(timezone.utc))
