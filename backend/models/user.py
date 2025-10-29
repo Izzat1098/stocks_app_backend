@@ -17,6 +17,7 @@ class User(Base):
     exchange = relationship("Exchange", back_populates="user")
     stock = relationship("Stock", back_populates="user")
     financial = relationship("Financial", back_populates="user")
+    investment = relationship("Investment", back_populates="user")
     stock_ai_prompt = relationship("StockAiPrompt", back_populates="user")
     
     def __repr__(self) -> str:

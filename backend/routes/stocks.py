@@ -94,8 +94,8 @@ async def update_stock(
     stock = await get_stock_by_id(stock_id, db, current_user)
     
     # Update only provided fields
-    update_data = stock_data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
+    updated_data = stock_data.model_dump(exclude_unset=True)
+    for field, value in updated_data.items():
         setattr(stock, field, value)
 
     await db.commit()

@@ -1,9 +1,6 @@
 from datetime import datetime
-from ipaddress import v4_int_to_packed
 from typing import Dict, Optional
-from wsgiref import validate
-from openai import NoneType
-from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class FinancialMetrics(BaseModel):
     """Schema for individual year's financial metrics"""
@@ -94,16 +91,3 @@ class FinancialResponse(FinancialDataBase):
     # Add response-specific fields if needed
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-
-
-class FinancialUpdate(BaseModel):
-    stock_id: Optional[int] = Field(None, gt=0)
-    year: Optional[int] = Field(None, ge=1900, le=2100)
-    field: Optional[str] = Field(None, max_length=50)
-    value: Optional[float] = None
-
-    @field_validator('field')
-    @classmethod
-    def validate_field(cls, v):
-        """Ensure field is always in title case"""
-        return v.title()

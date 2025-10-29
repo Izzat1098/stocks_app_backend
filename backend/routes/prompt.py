@@ -11,7 +11,7 @@ from backend.models.stock import StockAiPrompt
 
 from ..database import get_db
 from ..models import User, Exchange, Stock, Financial  # SQLAlchemy database model
-from ..schemas import FinancialMetrics, FinancialDataBase, FinancialCreate, FinancialUpdate, FinancialResponse  # Pydantic API schemas
+from ..schemas import FinancialMetrics, FinancialDataBase, FinancialCreate  # Pydantic API schemas
 from ..services.auth import get_current_user
 from ..services.openai import query_ai_prompt, query_company_description
 from .stocks import get_stock_by_id

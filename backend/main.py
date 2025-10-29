@@ -16,6 +16,7 @@ from .routes.stocks import router as stocks_router
 from .routes.reference_data import router as reference_router
 from .routes.financial import router as financial_router
 from .routes.prompt import router as prompt_router
+from .routes.investment import router as investment_router
 from .database import create_tables
 
 # Configure logging
@@ -83,6 +84,7 @@ app.include_router(exchanges_router)
 app.include_router(reference_router)
 app.include_router(financial_router)
 app.include_router(prompt_router)
+app.include_router(investment_router)
 
 def main():
     load_dotenv(find_dotenv())

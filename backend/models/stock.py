@@ -43,6 +43,7 @@ class Stock(Base):
 
     user = relationship("User", back_populates="stock")
     financial = relationship("Financial", back_populates="stock", cascade="all, delete-orphan")
+    investment = relationship("Investment", back_populates="stock", cascade="all, delete-orphan")
     exchange = relationship("Exchange", back_populates="stocks")
     stock_ai_prompt = relationship("StockAiPrompt", back_populates="stock", cascade="all, delete-orphan")
 
