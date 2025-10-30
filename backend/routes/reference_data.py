@@ -1,14 +1,18 @@
 from typing import List
+
 from fastapi import APIRouter
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/reference", tags=["reference-data"])
 
+
 class CountryResponse(BaseModel):
     name: str
 
+
 class SectorResponse(BaseModel):
     name: str
+
 
 # Predefined lists of countries and sectors
 COUNTRIES = [
@@ -42,7 +46,7 @@ COUNTRIES = [
     # "Turkey",
     # "Saudi Arabia",
     # "United Arab Emirates",
-    "Malaysia"
+    "Malaysia",
 ]
 
 SECTORS = [
@@ -72,7 +76,6 @@ SECTORS = [
     "Transportation",
     "Utilities",
 ]
-
 
 
 @router.get("/countries", response_model=List[CountryResponse])

@@ -1,12 +1,15 @@
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel
+
 
 class Stock(BaseModel):
     id: int
     symbol: str
     name: str
     exchange: str
+
 
 class Stocks(BaseModel):
     stocks: list[Stock]
@@ -18,6 +21,7 @@ class User(BaseModel):
     email: str
     password_hash: str
     created_at: Optional[datetime] = None
+
 
 class Users(BaseModel):
     users: list[User]
@@ -32,6 +36,7 @@ class Transaction(BaseModel):
     price: float
     timestamp: datetime
 
+
 class Transactions(BaseModel):
     transactions: list[Transaction]
 
@@ -42,6 +47,7 @@ class Holding(BaseModel):
     stock_symbol: str
     quantity: int
     avg_buy_price: float
+
 
 class Holdings(BaseModel):
     holdings: list[Holding]

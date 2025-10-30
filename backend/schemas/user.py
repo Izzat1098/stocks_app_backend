@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, EmailStr
+
 
 # For creating new users (API input)
 class UserCreate(BaseModel):
@@ -19,7 +21,7 @@ class UserUpdate(BaseModel):
 # For API responses (API output)
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: int
     username: str
     email: str

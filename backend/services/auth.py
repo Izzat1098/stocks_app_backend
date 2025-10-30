@@ -1,18 +1,21 @@
 import os
 from datetime import datetime, timedelta, timezone
-from types import NoneType
 from typing import Optional
-from jose import JWTError, jwt
+
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
 from ..models import User
 
 # JWT Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "this-is-definitely-not-the-secret-key-in-prod")
+SECRET_KEY = os.getenv(
+    "SECRET_KEY", 
+    "this-is-definitely-not-the-secret-key-in-prod"
+)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 600
 
@@ -28,8 +31,10 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -51,12 +56,9 @@ def verify_token(token: str) -> Optional[str]:
 
     except JWTError:
         return None
-    
 
-async def verify_token_user(
-    token: str, 
-    db: AsyncSession = Depends(get_db)
-):
+
+async def verify_token_user(token: str, db: AsyncSession = Depends(get_db)):
     """
     Verify JWT token and check user details in db
     """
@@ -73,10 +75,9 @@ async def verify_token_user(
     return user
 
 
-
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> User:
     """
     Dependency to get current authenticated user
@@ -86,16 +87,18 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     user = await verify_token_user(credentials.credentials, db)
 
     if user is None:
         raise credentials_exception
-    
+
     return user
 
 
-async def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+async def get_current_admin_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
     """
     Dependency to get current authenticated admin user
     (You can extend this later with role-based access)

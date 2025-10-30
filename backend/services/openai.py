@@ -1,10 +1,12 @@
 import logging
 import os
-from typing import Any
-import openai
 import time
+from typing import Any
+
+import openai
 
 _openai_client = None
+
 
 def _get_openai_client():
     global _openai_client
@@ -14,7 +16,7 @@ def _get_openai_client():
     openai_api_key = os.environ.get("OPENAI_API_KEY")
     if not openai_api_key:
         raise ValueError("OPENAI_API_KEY environment variable is not set.")
-    
+
     _openai_client.api_key = openai_api_key
     # openai.api_key = openai_api_key
 
@@ -48,12 +50,13 @@ def _openai_response(
             **kwargs,
         )
         elapsed = time.perf_counter() - start_ts
-        logging.info(f"OpenAI call status: {response.status}. "
-                     f"Purpose: {purpose}, Tokens used: "
-                     f"input_tokens: {response.usage.input_tokens}, "
-                     f"output_tokens: {response.usage.output_tokens}, "
-                     f"total_tokens: {response.usage.total_tokens}, "
-                     f"elapsed={elapsed:.3f}s"
+        logging.info(
+            f"OpenAI call status: {response.status}. "
+            f"Purpose: {purpose}, Tokens used: "
+            f"input_tokens: {response.usage.input_tokens}, "
+            f"output_tokens: {response.usage.output_tokens}, "
+            f"total_tokens: {response.usage.total_tokens}, "
+            f"elapsed={elapsed:.3f}s"
         )
 
     except Exception as e:
@@ -64,7 +67,11 @@ def _openai_response(
     return response
 
 
-def query_company_description(company_name: str, exchange: str, country: str) -> Any:
+def query_company_description(
+    company_name: str, 
+    exchange: str, 
+    country: str
+) -> Any:
     """
     Get AI description about company.
     """
@@ -77,7 +84,11 @@ def query_company_description(company_name: str, exchange: str, country: str) ->
         If the company is not found, respond with "Company not found".
         """
 
-    input = f"Company Name: {company_name}, Stock Exchange: {exchange}, Country Name: {country}"
+    input = (
+        f"Company Name: {company_name}, "
+        f"Stock Exchange: {exchange}, "
+        f"Country Name: {country}"
+    )
 
     # max_output_tokens = 1000
     reasoning = {"effort": "medium"}
@@ -86,19 +97,19 @@ def query_company_description(company_name: str, exchange: str, country: str) ->
     model = "gpt-5-mini"
     # model = "gpt-4.1-mini"
     purpose = "company description"
-    tools=[{"type": "web_search"}]
+    tools = [{"type": "web_search"}]
 
     try:
         response = _openai_response(
-            instructions=instructions, 
-            input=input, 
+            instructions=instructions,
+            input=input,
             model=model,
             purpose=purpose,
-            # max_output_tokens=max_output_tokens, 
+            # max_output_tokens=max_output_tokens,
             # text_format=AnalysisCompany,
             reasoning=reasoning,
             text=text,
-            tools=tools
+            tools=tools,
         )
 
         output = response.output_text
@@ -115,7 +126,14 @@ def query_company_description(company_name: str, exchange: str, country: str) ->
         raise RuntimeError(f"OpenAI request failed: {e}")
 
 
-def query_ai_prompt(company_name: str, exchange: str, country: str, prompt: str, data: Any = None, prev_queries: str = "") -> Any:
+def query_ai_prompt(
+    company_name: str,
+    exchange: str,
+    country: str,
+    prompt: str,
+    data: Any = None,
+    prev_queries: str = "",
+) -> Any:
     """
     Get AI answers about some prompts/questions
     """
@@ -131,7 +149,14 @@ def query_ai_prompt(company_name: str, exchange: str, country: str, prompt: str,
         If the company is not found, respond with "Company not found".
         """
 
-    input = f"Company Name: {company_name}, Stock Exchange: {exchange}, Country Name: {country}, Question/Prompt: {prompt}, Financial Data: {data}, Previous Queries/Answers: {prev_queries}"
+    input = (
+        f"Company Name: {company_name}, "
+        f"Stock Exchange: {exchange}, "
+        f"Country Name: {country}, "
+        f"Question/Prompt: {prompt}, "
+        f"Financial Data: {data}, "
+        f"Previous Queries/Answers: {prev_queries}"
+    )
 
     # max_output_tokens = 1000
     reasoning = {"effort": "medium"}
@@ -140,19 +165,19 @@ def query_ai_prompt(company_name: str, exchange: str, country: str, prompt: str,
     model = "gpt-5-mini"
     # model = "gpt-4.1-mini"
     purpose = "company description"
-    tools=[{"type": "web_search"}]
+    tools = [{"type": "web_search"}]
 
     try:
         response = _openai_response(
-            instructions=instructions, 
-            input=input, 
+            instructions=instructions,
+            input=input,
             model=model,
             purpose=purpose,
-            # max_output_tokens=max_output_tokens, 
+            # max_output_tokens=max_output_tokens,
             # text_format=AnalysisCompany,
             reasoning=reasoning,
             text=text,
-            tools=tools
+            tools=tools,
         )
 
         output = response.output_text

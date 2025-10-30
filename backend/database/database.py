@@ -1,8 +1,9 @@
 import logging
 import os
+
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import text
 
 from ..models import Base
 
@@ -15,9 +16,8 @@ IS_DEVELOPMENT = os.getenv("APP_ENV").lower() == "development"
 engine = create_async_engine(DATABASE_URL, echo=False)
 
 # Create async session factory
-async_session = sessionmaker(
-    engine, class_=AsyncSession, expire_on_commit=False
-)
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
 
 async def test_db_connection():
     """Test database connection on startup"""
@@ -26,11 +26,11 @@ async def test_db_connection():
             await conn.execute(text("SELECT 1"))
         logging.info("[SUCCESS] Database connection successful")
         return True
-    
+
     except Exception as e:
         logging.error(f"[FAIL] Database connection failed: {e}")
         raise RuntimeError(f"Cannot connect to database: {e}")
-    
+
 
 async def get_db():
     """
@@ -58,24 +58,3 @@ async def create_tables():
     except Exception as e:
         logging.error(f"[FAIL] Failed to create database tables: {e}")
         raise
-
-
-# async def initialize_db():
-#     """
-#     Initialize the database with tables and default data
-#     """
-#     # Create tables
-#     await create_tables()
-    
-#     # Add default data
-#     async with async_session() as session:
-#         # Check if admin user exists
-#         admin_user = await session.get(User, 1)
-#         if not admin_user:
-#             admin_user = User(
-#                 username="admin",
-#                 email="admin@example.com",
-#                 password_hash="hashed_password"  # In production, use proper password hashing
-#             )
-#             session.add(admin_user)
-#             await session.commit()
