@@ -1,2 +1,2 @@
-# stocks_app_backend
-Python fastapi backend for a stock tracking app
+# Backend Service for Stocks Tracking App
+Python FastApi backend server + database for a stock tracking app

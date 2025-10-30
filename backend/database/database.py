@@ -9,8 +9,10 @@ from ..models import Base
 
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is not set!")
 
-IS_DEVELOPMENT = os.getenv("APP_ENV").lower() == "development"
+IS_DEVELOPMENT = os.getenv("APP_ENV", "development").lower() == "development"
 
 # Create async engine
 engine = create_async_engine(DATABASE_URL, echo=False)

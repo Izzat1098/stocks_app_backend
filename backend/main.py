@@ -1,13 +1,15 @@
 import logging
 import os
-from contextlib import asynccontextmanager
-
-import uvicorn
 from dotenv import find_dotenv, load_dotenv
+
+load_dotenv(find_dotenv())
+
+from contextlib import asynccontextmanager
+import uvicorn
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .database import create_tables
 from .routes.exchanges import router as exchanges_router
 from .routes.financial import router as financial_router
 from .routes.investment import router as investment_router
@@ -26,10 +28,10 @@ logging.basicConfig(
 # Suppress noisy loggers
 logging.getLogger("watchfiles").setLevel(logging.WARNING)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+    from .database import create_tables
     await create_tables()
     yield
 
@@ -76,8 +78,7 @@ app.include_router(investment_router)
 
 
 def main():
-    load_dotenv(find_dotenv())
-
+    logging.info("Starting Stocks App Backend Service...")
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", 8000))
     environment = os.getenv("APP_ENV", "")
