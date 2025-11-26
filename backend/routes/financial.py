@@ -48,6 +48,7 @@ async def save_financial_data(
                         Financial.user_id == current_user.id,
                         Financial.year == financial_year,
                         Financial.field == field_name,
+                        Financial.stock_id == stock.id,
                     )
                 )
                 current_record = db_data.scalar_one_or_none()
