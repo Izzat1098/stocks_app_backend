@@ -37,11 +37,13 @@ PROMPTS = {
     "Q9": "What is the company's status of balance sheet and cash flow? Is it creating or destroying value?",
     "Q10": "What is the company's valuation? Is it undervalued or overvalued compared to its peers and historical averages?",
     "Q11": "What is the overall outlook for the company and its industry?",
-    "Q12": "Based on the analysis, would you consider investing in this company from a fundamental value investor point of view?",
+    "Q12": "Check on the latest quarterly results and summarize the key points.",
+    "Q99": "Based on the analysis, would you consider investing in this company from a fundamental value investor point of view?",
+    "Q100": "Answer with YES or NO - Based on latest quarter performance and share price, would acquiring the entire business be attractive? Then state your reasons",
 }
 
-prompts_take_data = ["Q3", "Q4", "Q7", "Q10", "Q12"]
-prompts_take_previous_prompts = ["Q12"]
+prompts_take_data = ["Q3", "Q4", "Q7", "Q10", "Q99", "Q100"]
+prompts_take_previous_prompts = ["Q99", "Q100"]
 
 
 @router.get("/", response_model=PromptsResponse, status_code=status.HTTP_200_OK)
