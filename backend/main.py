@@ -35,9 +35,15 @@ async def lifespan(app: FastAPI):
     await create_tables()
     yield
 
-
-app = FastAPI(lifespan=lifespan)
-
+environment = os.getenv("APP_ENV", "")
+app = FastAPI(
+    lifespan=lifespan,
+    title="Stocks App API",
+    # Disable docs in production
+    docs_url="/docs" if environment.lower() == "development" else None,
+    redoc_url="/redoc" if environment.lower() == "development" else None,
+    openapi_url="/openapi.json" if environment.lower() == "development" else None,
+)
 
 # Environment-based CORS configuration
 def get_cors_origins():

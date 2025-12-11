@@ -131,6 +131,7 @@ def query_ai_prompt(
     exchange: str,
     country: str,
     prompt: str,
+    add_instruction: str = "",
     data: Any = None,
     prev_queries: str = "",
 ) -> Any:
@@ -148,6 +149,9 @@ def query_ai_prompt(
         Strictly provide the answer in three or four sentences with a character limit of 500.
         If the company is not found, respond with "Company not found".
         """
+    
+    if add_instruction:
+        instructions += "\n" + add_instruction
 
     input = (
         f"Company Name: {company_name}, "
@@ -164,7 +168,7 @@ def query_ai_prompt(
     # model = "gpt-5"
     model = "gpt-5-mini"
     # model = "gpt-4.1-mini"
-    purpose = "company description"
+    purpose = "company financial query"
     tools = [{"type": "web_search"}]
 
     try:

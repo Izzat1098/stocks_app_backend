@@ -38,12 +38,32 @@ PROMPTS = {
     "Q10": "What is the company's valuation? Is it undervalued or overvalued compared to its peers and historical averages?",
     "Q11": "What is the overall outlook for the company and its industry?",
     "Q12": "Check on the latest quarterly results and summarize the key points.",
-    "Q99": "Based on the analysis, would you consider investing in this company from a fundamental value investor point of view?",
-    "Q100": "Answer with YES or NO - Based on latest quarter performance and share price, would acquiring the entire business be attractive? Then state your reasons",
+    # Specialized prompts for value investors with additional rules - see below
+    "Q100": "Answer with YES or NO: Based on the financial data and analysis, is this a good company to invest in from a value investor point of view? State your reasons",
+    "Q101": "If you recommended to buy this stock in prompt Q100, tell me what the investment strategy should be? Should I buy at current price or wait for lower price? When should I sell?"
 }
 
-prompts_take_data = ["Q3", "Q4", "Q7", "Q10", "Q99", "Q100"]
-prompts_take_previous_prompts = ["Q99", "Q100"]
+VALUE_INVESTOR_RULES = """
+    These are some rules to follow when answering regarding investment decisions:
+    1- Price to Earnings (P/E) ratio should be at similar level with earnings growth rate. If company pays dividend, that can justify some premium on P/E ratio.
+    2- Company can be categorized based on earnings growth rate as follows: slow grower (0% to 10%), medium grower (10% to 20%) and fast grower (more than 20%).
+    3- Company that don't have consistent earnings growth should be avoided but it can be considered for turnaround, cyclical or asset play investment targets.
+    4- Current assets is more than current liabilities. 
+    5- Cash is king. Company should have cash more than long term debt, and the cash should increasing over time.
+    6- Company has great net profit margin of more than 10%, and gross margin of more than 40%.
+    7- Debt to equity ratio should be less than 0.8.
+    8- Return on Equity (ROE) should be more than 20%.
+    9- Check to ensure that revenue and earnings growth are logical and not due to one-time events, accounting tricks or scam/manipulation.
+    10- For Slow grower company, not much share price increase can be expected. We can invest but only for dividend income and that should be more than 6% yield.
+    11- For Medium grower company, moderate share price increase can be expected of 20% to 50%. after few years. However, we need to buy at lower price earnings ratio and sell when the share price goes up.
+    12- For Fast grower company, very high share price increase upto 100 times (100-baggers) can be expected provided the company can maintain the growth. 
+    12- For Fast grower company, we can buy at high price earnings ratio but need to sell when the growth slows down. However, be cautious of very high P/E that is higher than growth rate.
+    13- For non-growing company, avoid it entirely unless it is a target of takeover when the target price is 10 percent higher than current price.
+    14- Avoid company that is in highly competitive industry without any competitive advantages or moats.
+    """
+
+prompts_take_data = ["Q3", "Q4", "Q7", "Q10", "Q100", "Q101"]
+prompts_take_previous_prompts = ["Q100", "Q101"]
 
 
 @router.get("/", response_model=PromptsResponse, status_code=status.HTTP_200_OK)
@@ -128,20 +148,18 @@ async def get_ai_response(
         ai_responses_all = ai_responses.scalars().all()
 
         if ai_responses_all:
-            previous_answers = "\n".join(
-                [
-                    f"{PROMPTS[response.prompt]}: {response.response}"
-                    for response in ai_responses_all
-                ]
-            )
+            for response in ai_responses_all:
+                if response.prompt in PROMPTS and response.prompt != prompt_id:
+                    previous_answers += f"Prompt id: {response.prompt}, Prompt: {PROMPTS[response.prompt]}, Answer: {response.response}.\n"
 
     ai_status, ai_response = query_ai_prompt(
-        stock.company_name,
-        stock.exchange.name,
-        stock.country,
-        PROMPTS[prompt_id],
-        financial_info,
-        previous_answers,
+        company_name=stock.company_name,
+        exchange=stock.exchange.name,
+        country=stock.country,
+        prompt=PROMPTS[prompt_id],
+        add_instruction=VALUE_INVESTOR_RULES if prompt_id in prompts_take_data else "",
+        data=financial_info,
+        prev_queries=previous_answers,
     )
 
     if not ai_status:
